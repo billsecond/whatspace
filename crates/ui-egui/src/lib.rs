@@ -170,6 +170,8 @@ pub(crate) enum Action {
     AskTrash(NodeId),
     Export(NodeId, ExportKind),
     Scan(PathBuf),
+    /// Ask for a folder to scan.
+    Browse,
 }
 
 /// What was worked out from the tree, kept until the tree changes.
@@ -678,7 +680,8 @@ impl App {
             self.actions.push(Action::Scan(tree.root_path().to_path_buf()));
         }
         if open {
-            self.browse();
+            // After the frame: the folder dialog must not hold the tree while a scan fills it.
+            self.actions.push(Action::Browse);
         }
         if let Some(sel) = self.selected {
             if copy {
@@ -772,6 +775,7 @@ impl App {
                 }
                 Action::Export(id, kind) => self.export(&shared, id, kind),
                 Action::Scan(path) => self.start_scan(&path),
+                Action::Browse => self.browse(),
             }
         }
     }
