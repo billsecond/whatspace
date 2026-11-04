@@ -1,0 +1,26 @@
+[package]
+name = "whatspace-ui-egui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "WhatSpace front end in egui: the folder tree, details, treemap, extensions, largest files and file ages"
+
+[lints]
+workspace = true
+
+[dependencies]
+whatspace-fs = { workspace = true }
+whatspace-model = { workspace = true }
+whatspace-scan = { workspace = true }
+egui = { workspace = true }
+serde = { workspace = true }
+jiff = { workspace = true }
+log = { workspace = true }
+
+[dev-dependencies]
+# The tests drive the window without a screen; `examples/ui_shot.rs` also renders it to PNG
+# through wgpu.
+egui_kittest = { workspace = true, features = ["wgpu"] }
+image = { workspace = true }
+serde_json = { workspace = true }

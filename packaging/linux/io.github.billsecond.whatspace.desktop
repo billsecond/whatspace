@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=WhatSpace
+GenericName=Disk Usage Analyzer
+Comment=See what is taking up space on your disks
+Exec=whatspace %f
+TryExec=whatspace
+Icon=io.github.billsecond.whatspace
+Terminal=false
+StartupNotify=true
+StartupWMClass=io.github.billsecond.whatspace
+Categories=System;FileTools;Filesystem;
+Keywords=disk;usage;space;storage;size;treemap;analyzer;cleanup;du;
+MimeType=inode/directory;

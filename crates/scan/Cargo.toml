@@ -1,0 +1,15 @@
+[package]
+name = "whatspace-scan"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "WhatSpace scanner: walks a folder on worker threads into the size tree, with live progress and cancellation"
+
+[lints]
+workspace = true
+
+[dependencies]
+whatspace-fs = { workspace = true }
+whatspace-model = { workspace = true }
+thiserror = { workspace = true }
