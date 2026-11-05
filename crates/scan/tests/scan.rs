@@ -61,7 +61,11 @@ fn totals_match_what_is_on_disk() {
     assert_eq!(root.files, 4);
     assert_eq!(root.dirs, 4);
     assert_eq!(root.errors, 0);
-    assert!(root.allocated >= 9010, "allocated {} is at least the sizes", root.allocated);
+    // The files take at least their sizes, unless the file system squeezed them (ZFS, compressed
+    // Btrfs): then the files that take less are marked packed.
+    let mut packed = false;
+    tree.walk(NodeId::ROOT, |_, n| packed |= n.flags.contains(Flags::PACKED));
+    assert!(root.allocated >= 9010 || packed, "allocated {} is less than the sizes and nothing is marked packed", root.allocated);
     assert!(root.flags.contains(Flags::SCANNED));
     let a = tree.find(&s.0.join("a")).unwrap();
     assert_eq!(tree.node(a).unwrap().size, 4000);

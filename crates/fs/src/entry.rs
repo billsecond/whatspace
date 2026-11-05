@@ -227,7 +227,10 @@ mod tests {
         let meta = std::fs::symlink_metadata(&path).unwrap();
         let facts = Probe { cluster: 4096, hard_links: true }.file(&path, &meta);
         assert_eq!(facts.size, 10_000);
-        assert!(facts.allocated >= 10_000, "a dense file takes at least its length: {facts:?}");
+        // A file takes at least its length, unless the file system squeezed it: ZFS (FreeBSD's
+        // default) and compressed Btrfs store these 10,000 identical bytes in one block. Then it
+        // must be marked packed.
+        assert!(facts.allocated >= 10_000 || facts.packed, "smaller than its length but not marked packed: {facts:?}");
         assert!(facts.modified > 1_600_000_000, "{facts:?}");
         assert!(!facts.cloud);
         assert_eq!(facts.hard_link, None, "one name only");
