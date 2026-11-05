@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  WhatSpace MSI (WiX Toolset v5: `dotnet tool install -g wix`, plus its UI and Util extensions:
+  `wix extension add -g WixToolset.UI.wixext/5.0.2` and the same for WixToolset.Util.wixext).
+  Built by package.ps1:
+
+    wix build whatspace.wxs -arch x64 -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
+      -d Version=1.2.3 -d BinDir=... -d IconPath=... -d LicenseRtf=... -o out.msi
+
+  Per-machine install into Program Files with a Start Menu shortcut and a "Scan with WhatSpace"
+  entry on folders and drives in Explorer. The installer shows the standard WiX dialogs: welcome
+  + license, progress, and a finish page.
+
+  UpgradeCode and the component GUIDs below belong to WhatSpace alone. Never copy them from (or
+  into) a sibling app: Windows Installer treats every package sharing an UpgradeCode as one
+  product, so a shared code makes one app's installer refuse to install ("a newer version is
+  already installed") or silently uninstall the other.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package
+      Name="WhatSpace"
+      Manufacturer="WhatSpace contributors"
+      Version="$(var.Version)"
+      UpgradeCode="9F883929-CEC2-42CD-A5D8-319817F7269A"
+      Scope="perMachine"
+      Compressed="yes"
+      Language="1033">
+    <SummaryInformation Description="WhatSpace disk space analyzer" Manufacturer="WhatSpace contributors" />
+    <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
+         (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+        DowngradeErrorMessage="A newer version of WhatSpace is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="WhatSpaceIcon.ico" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="WhatSpaceIcon.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/billsecond/whatspace" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/billsecond/whatspace" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/billsecond/whatspace/issues" />
+
+    <!-- Installer UI: WixUI_Minimal is welcome + license, progress, then a finish page so people
+         can see the install worked. Its dialogs and bitmaps are WiX's own (WixToolset.UI.wixext);
+         package.ps1 builds the license RTF from LICENSE-MIT and LICENSE-APACHE. The finish page
+         offers to launch WhatSpace (ticked by default) through WixShellExec
+         (WixToolset.Util.wixext); silent installs (/qn) never show it. -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch WhatSpace" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <Property Id="WixShellExecTarget" Value="[#WhatSpaceExe]" />
+    <CustomAction Id="LaunchWhatSpace" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)" DllEntry="WixShellExec"
+        Impersonate="yes" Return="ignore" />
+    <UI>
+      <ui:WixUI Id="WixUI_Minimal" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchWhatSpace"
+          Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
+    </UI>
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="WhatSpace" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="WhatSpace" Level="1">
+      <ComponentGroupRef Id="WhatSpaceFiles" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="WhatSpaceFiles" Directory="INSTALLFOLDER">
+      <Component Id="WhatSpaceApp" Guid="6800BA2E-5ABA-47C1-84FA-450866D4DEEA">
+        <File Id="WhatSpaceExe" Source="$(var.BinDir)\whatspace.exe" KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="WhatSpace"
+              Description="See what is taking up space on your disks" WorkingDirectory="INSTALLFOLDER" Advertise="yes"
+              Icon="WhatSpaceIcon.ico" IconIndex="0" />
+        </File>
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\whatspace.exe" Value="[#WhatSpaceExe]" Type="string" />
+      </Component>
+
+      <!-- "Scan with WhatSpace" on a folder, on the empty space inside a folder, and on a drive in
+           Explorer (on Windows 11 under "Show more options"). Each starts WhatSpace scanning that
+           place. Nothing else of Explorer's is changed, and all of it goes on uninstall. -->
+      <Component Id="WhatSpaceExplorerMenu" Guid="E2FCD4B0-5FD1-436D-A27D-EFB7561D8FA1">
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\shell\WhatSpace" Value="Scan with WhatSpace" Type="string" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\shell\WhatSpace" Name="Icon" Value="&quot;[#WhatSpaceExe]&quot;,0" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\shell\WhatSpace\command" Value="&quot;[#WhatSpaceExe]&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\Background\shell\WhatSpace" Value="Scan with WhatSpace" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\Background\shell\WhatSpace" Name="Icon" Value="&quot;[#WhatSpaceExe]&quot;,0" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Directory\Background\shell\WhatSpace\command" Value="&quot;[#WhatSpaceExe]&quot; &quot;%V&quot;" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Drive\shell\WhatSpace" Value="Scan with WhatSpace" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Drive\shell\WhatSpace" Name="Icon" Value="&quot;[#WhatSpaceExe]&quot;,0" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Drive\shell\WhatSpace\command" Value="&quot;[#WhatSpaceExe]&quot; &quot;%1&quot;" Type="string" />
+      </Component>
+
+      <Component Id="WhatSpaceCli" Guid="221A378B-4BCC-461D-9D25-484D2531DC43">
+        <File Id="WhatSpaceCliExe" Source="$(var.BinDir)\whatspace-cli.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

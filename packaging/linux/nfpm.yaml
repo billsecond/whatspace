@@ -1,0 +1,75 @@
+# .deb and .rpm packages (nfpm: https://nfpm.goreleaser.com). Run by package.sh, which stages
+# the file tree, substitutes its path for ${STAGE} (nfpm doesn't expand env vars in `src`) and
+# exports VERSION and NFPM_ARCH.
+#
+#   nfpm package -f packaging/linux/nfpm.yaml -p deb -t dist/release/
+name: whatspace
+arch: ${NFPM_ARCH}
+platform: linux
+version: ${VERSION}
+# semver: 0.2.0-rc.1 becomes 0.2.0~rc.1 in deb/rpm, so pre-releases sort before the release.
+version_schema: semver
+release: 1
+section: utils
+priority: optional
+maintainer: ${WHATSPACE_MAINTAINER}
+vendor: WhatSpace contributors
+homepage: https://github.com/billsecond/whatspace
+license: MIT OR Apache-2.0
+description: |-
+  See what is taking up space on your disks.
+  WhatSpace scans a drive or folder and shows a folder tree sorted by size with
+  share bars, a treemap, space by file type, the largest files and file ages.
+  It measures both size and allocated space following each file system's rules
+  (sparse and compressed files, hard links, mounts). Includes whatspace-cli,
+  which scans from the command line and exports CSV or JSON.
+
+# The binaries link only glibc and libgcc_s directly. Windowing (X11/Wayland, xkbcommon) and the
+# GPU (Vulkan, EGL/GL) are loaded at runtime, so they are dependencies/recommendations here
+# rather than ELF NEEDED entries. libxkbcommon-x11 is a dependency, not a recommendation: on an
+# X11 session the window can't start without it.
+overrides:
+  deb:
+    depends:
+      - libc6 (>= 2.35)
+      - libgcc-s1
+      - libxkbcommon0
+      - libxkbcommon-x11-0
+      - libvulkan1 | libegl1
+    recommends:
+      - libwayland-client0
+      - libx11-6
+      - libx11-xcb1
+      - libxcursor1
+      - libxi6
+      - libxrandr2
+      - mesa-vulkan-drivers
+      - xdg-desktop-portal
+  rpm:
+    depends:
+      - libxkbcommon
+      - libxkbcommon-x11
+      - (vulkan-loader or libglvnd-egl)
+    recommends:
+      - libwayland-client
+      - libX11
+      - libXcursor
+      - libXi
+      - libXrandr
+      - mesa-vulkan-drivers
+      - xdg-desktop-portal
+
+contents:
+  - src: ${STAGE}/usr/bin/whatspace
+    dst: /usr/bin/whatspace
+    file_info: { mode: 0755 }
+  - src: ${STAGE}/usr/bin/whatspace-cli
+    dst: /usr/bin/whatspace-cli
+    file_info: { mode: 0755 }
+  - src: ${STAGE}/usr/share/
+    dst: /usr/share/
+    type: tree
+
+scripts:
+  postinstall: packaging/linux/postinst.sh
+  postremove: packaging/linux/postinst.sh

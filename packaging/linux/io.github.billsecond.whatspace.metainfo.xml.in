@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata (software centres, Flathub). Template: package.sh and the Flatpak
+     manifest substitute @VERSION@ and @DATE@ from Cargo.toml and the build date. -->
+<component type="desktop-application">
+  <id>io.github.billsecond.whatspace</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT OR Apache-2.0</project_license>
+  <name>WhatSpace</name>
+  <summary>See what is taking up space on your disks</summary>
+  <developer id="io.github.billsecond">
+    <name>WhatSpace contributors</name>
+  </developer>
+  <description>
+    <p>
+      WhatSpace scans a drive or a folder and shows where the space went: a folder tree sorted by size with a share bar for every folder, a treemap, space by file type, the largest files and how old the files are.
+    </p>
+    <p>
+      It measures both the size of the files and the space they really take on disk, following the rules of each file system: sparse and compressed files on Btrfs, ZFS and ext4, hard links counted once, other mounts and pseudo file systems left alone. Folders can be scanned again, opened, or moved to the trash, and a scan can be exported as CSV or JSON.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.billsecond.whatspace.desktop</launchable>
+  <icon type="stock">io.github.billsecond.whatspace</icon>
+  <!-- Only url types known to appstream 0.15 (Ubuntu 22.04, where CI validates): no vcs-browser. -->
+  <url type="homepage">https://github.com/billsecond/whatspace</url>
+  <url type="bugtracker">https://github.com/billsecond/whatspace/issues</url>
+  <url type="help">https://github.com/billsecond/whatspace</url>
+  <url type="contact">https://github.com/billsecond/whatspace/issues</url>
+  <categories>
+    <category>System</category>
+    <category>Utility</category>
+  </categories>
+  <keywords>
+    <keyword>disk</keyword>
+    <keyword>usage</keyword>
+    <keyword>space</keyword>
+    <keyword>treemap</keyword>
+  </keywords>
+  <screenshots>
+    <screenshot type="default">
+      <caption>The folder tree with share bars and the treemap</caption>
+      <image>https://raw.githubusercontent.com/billsecond/whatspace/main/docs/images/treemap.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The largest files, in the dark theme</caption>
+      <image>https://raw.githubusercontent.com/billsecond/whatspace/main/docs/images/largest-dark.png</image>
+    </screenshot>
+  </screenshots>
+  <branding>
+    <color type="primary" scheme_preference="light">#a8e4cf</color>
+    <color type="primary" scheme_preference="dark">#0e7a5a</color>
+  </branding>
+  <requires>
+    <display_length compare="ge">820</display_length>
+  </requires>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <provides>
+    <binary>whatspace</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@VERSION@" date="@DATE@"/>
+  </releases>
+</component>
