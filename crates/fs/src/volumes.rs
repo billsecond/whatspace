@@ -43,9 +43,19 @@ impl Volume {
     }
 }
 
+/// Asks the system for its volumes one caller at a time. On FreeBSD and macOS the list comes from
+/// `getmntinfo`, which fills one buffer shared by the whole process: two threads asking at once
+/// (the start page and a scan starting, or two scans) can be handed a pointer to nothing, and the
+/// program aborts. Holding this lock around the call keeps it to one at a time.
+static LISTING: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// All mounted volumes with a size, sorted by mount point. Empty when the system won't say.
 pub fn list() -> Vec<Volume> {
-    let Ok(disks) = sysinfo::Disks::new_with_refreshed_list() else {
+    let listed = {
+        let _one_at_a_time = LISTING.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        sysinfo::Disks::new_with_refreshed_list()
+    };
+    let Ok(disks) = listed else {
         return Vec::new();
     };
     let mut out: Vec<Volume> = disks
@@ -228,6 +238,16 @@ mod tests {
         for v in list() {
             assert!(v.total > 0);
             assert!(v.available <= v.total);
+        }
+    }
+
+    #[test]
+    fn listing_from_many_threads_at_once() {
+        // FreeBSD's getmntinfo shares one buffer per process; asked from several threads together
+        // it handed sysinfo a null pointer and aborted the test run.
+        let threads: Vec<_> = (0..8).map(|_| std::thread::spawn(|| (0..20).map(|_| list().len()).max())).collect();
+        for t in threads {
+            assert!(t.join().is_ok(), "a thread listing volumes died");
         }
     }
 
