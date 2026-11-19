@@ -1,0 +1,30 @@
+[package]
+name = "whatspace"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+default-run = "whatspace"
+description = "WhatSpace desktop app"
+
+[lints]
+workspace = true
+
+[dependencies]
+whatspace-fs = { workspace = true }
+whatspace-model = { workspace = true }
+whatspace-ui-egui = { workspace = true }
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "wayland", "x11", "persistence"] }
+egui = { workspace = true }
+serde = { workspace = true }
+log = { workspace = true }
+rfd = { workspace = true }
+trash = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# The graphics probe on Windows waits for wgpu's adapter list (see src/graphics.rs).
+pollster = "0.4"
+
+[build-dependencies]
+# Icon + VERSIONINFO for whatspace.exe; build.rs only uses it when the target is Windows.
+winresource = "0.1"

@@ -1,0 +1,36 @@
+# Builds and tests the workspace on FreeBSD, inside a FreeBSD VM on a Linux runner
+# (GitHub has no FreeBSD runners).
+name: FreeBSD
+
+# The VM build is slow, so it runs nightly on main and on pushes to `release`, not on every push
+# or dependency change: a drifted dependency still shows up within a day, and always before a
+# release ships. PRs that change the FreeBSD packaging itself still run it.
+on:
+  schedule:
+    - cron: "41 4 * * *"
+  push:
+    branches: [release]
+  pull_request:
+    paths:
+      - .github/workflows/freebsd.yml
+      - packaging/env.sh
+      - packaging/freebsd/**
+      - crates/fs/**
+  workflow_dispatch:
+
+concurrency:
+  group: freebsd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  freebsd:
+    # Intentionally tracked at @main (not SHA-pinned) so shared CI improvements, security fixes,
+    # and build optimizations propagate without PR churn, as in the Craft apps.
+    uses: storytold/craft-common-actions/.github/workflows/freebsd.yml@main
+    with:
+      # WhatSpace embeds no Craft fonts: build without that checkout.
+      craft-fonts-ref: ""
+      run-package-check: true

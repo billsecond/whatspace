@@ -1,0 +1,25 @@
+WhatSpace
+Copyright (c) 2026 the WhatSpace contributors.
+Licensed under the MIT License or the Apache License, Version 2.0, at your option
+(LICENSE-MIT, LICENSE-APACHE).
+
+WhatSpace is a clean-room disk space analyzer. It is not affiliated with, endorsed by or derived
+from TreeSize (a product of JAM Software GmbH) or any other disk analyzer. Product names mentioned
+in the documentation (to say what a feature corresponds to) are trademarks of their owners.
+
+Portions adapted from MailCraft
+
+WhatSpace follows the setup and conventions of MailCraft (https://github.com/billsecond/mailcraft),
+and these parts started from MailCraft's source, which is Copyright (c) 2026 the MailCraft
+contributors and licensed under the MIT License or the Apache License, Version 2.0 (MailCraft's
+NOTICE says which of them in turn started from WordCraft, https://github.com/storytold/wordcraft,
+Copyright (c) 2026 ArtCraft Team and the WordCraft contributors, under the same licences):
+
+- workspace tooling: xtask (layers, assets, ci, stats, version, ico, the icon renderer's
+  supersampling), rustfmt and clippy settings, the lint set;
+- packaging scripts and metadata for macOS, Windows, Linux and FreeBSD (packaging/), and the
+  release workflows (.github/workflows/), which call the shared craft-common-actions;
+- the Windows graphics-backend choice (apps/whatspace/src/graphics.rs).
+
+The squarified treemap layout follows the published algorithm of Mark Bruls, Kees Huizing and
+Jarke J. van Wijk, "Squarified Treemaps" (2000).

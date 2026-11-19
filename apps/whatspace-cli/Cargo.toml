@@ -1,0 +1,22 @@
+[package]
+name = "whatspace-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "WhatSpace command line: scan a folder, list volumes, export CSV or JSON"
+
+[[bin]]
+name = "whatspace-cli"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+whatspace-fs = { workspace = true }
+whatspace-model = { workspace = true }
+whatspace-scan = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

@@ -1,0 +1,61 @@
+# Flatpak manifest for WhatSpace, ready for a Flathub submission.
+#
+# Flatpak builds run offline, so the crate sources must be vendored first. From the repo root:
+#
+#   curl -fsSLO https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
+#   python3 flatpak-cargo-generator.py Cargo.lock -o packaging/linux/flatpak/cargo-sources.json
+#   flatpak-builder --user --install --force-clean build-flatpak packaging/linux/flatpak/io.github.billsecond.whatspace.yml
+#   flatpak run io.github.billsecond.whatspace
+#
+# For Flathub, replace the `dir` source with a `git` source pinned to a release tag and commit.
+# The release's .flatpak bundles come from io.github.billsecond.whatspace.bundle.yml instead (see there);
+# keep runtime, runtime-version, sdk and finish-args identical in both (packaging-lint checks this).
+id: io.github.billsecond.whatspace
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: whatspace
+finish-args:
+  # Display: Wayland first; X11 only when no Wayland compositor is running.
+  - --socket=wayland
+  - --socket=fallback-x11
+  # X11 shared memory (MIT-SHM). Without it the X11 fallback is slow or fails.
+  - --share=ipc
+  # GPU access for the wgpu renderer (Vulkan, or GL as a fallback).
+  - --device=dri
+  # A disk usage analyzer has to see the whole file system to measure it, and moving what the
+  # owner chose to the trash needs to write there. WhatSpace never changes anything else, and
+  # never deletes: it moves to the trash, from where things can be put back.
+  - --filesystem=host
+  # Deliberately not granted: network (WhatSpace never goes online).
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+modules:
+  - name: whatspace
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/whatspace/cargo
+        CARGO_NET_OFFLINE: 'true'
+    build-commands:
+      - cargo --offline build --release --locked -p whatspace -p whatspace-cli
+      - install -Dm755 target/release/whatspace /app/bin/whatspace
+      - install -Dm755 target/release/whatspace-cli /app/bin/whatspace-cli
+      - install -Dm644 packaging/linux/io.github.billsecond.whatspace.desktop /app/share/applications/io.github.billsecond.whatspace.desktop
+      - mkdir -p /app/share/icons && cp -R assets/app-icon/hicolor /app/share/icons/
+      - >-
+        version=$(awk '/^\[/{p=($0=="[workspace.package]");next} p&&$1=="version"{gsub(/[" ]/,"",$3);print $3;exit}' Cargo.toml);
+        install -d /app/share/metainfo;
+        sed -e "s/@VERSION@/$version/" -e "s/@DATE@/$(date -u +%Y-%m-%d)/"
+        packaging/linux/io.github.billsecond.whatspace.metainfo.xml.in > /app/share/metainfo/io.github.billsecond.whatspace.metainfo.xml
+    sources:
+      - type: dir
+        path: ../../..
+        skip:
+          - target
+          - dist
+          - build-flatpak
+          - .flatpak-builder
+      - cargo-sources.json

@@ -1,0 +1,21 @@
+[package]
+name = "whatspace-fs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "WhatSpace platform layer: volumes, allocated sizes, file identity and mount boundaries on each operating system and file system"
+
+[lints]
+workspace = true
+
+[dependencies]
+sysinfo = { workspace = true }
+fs4 = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+filesize = { workspace = true }
+winapi-util = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

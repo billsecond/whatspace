@@ -1,0 +1,44 @@
+# Flatpak manifest for the single-file bundle attached to every GitHub release
+# (whatspace-<version>-linux-<arch>.flatpak). Build it with packaging/linux/flatpak-bundle.sh.
+#
+# It repackages the release's own Linux tarball (whatspace-<version>-linux-<arch>.tar.gz,
+# built on Ubuntu 22.04 by package.sh) instead of compiling Rust inside flatpak-builder: no
+# network and no vendored crate sources during the build, a few seconds instead of many minutes,
+# and byte-for-byte the same binaries as the AppImage/deb/rpm. The script unpacks the tarball
+# into `stage/` next to a copy of this file. The binaries need glibc >= 2.35 and load X11,
+# Wayland, xkbcommon and Vulkan at runtime; the freedesktop runtime has all of them, and the
+# GPU driver comes from its org.freedesktop.Platform.GL extension.
+#
+# io.github.billsecond.whatspace.yml (same directory) is the from-source manifest for Flathub. Keep
+# runtime, runtime-version, sdk and finish-args identical in both (packaging-lint checks this).
+id: io.github.billsecond.whatspace
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: whatspace
+finish-args:
+  # Display: Wayland first; X11 only when no Wayland compositor is running.
+  - --socket=wayland
+  - --socket=fallback-x11
+  # X11 shared memory (MIT-SHM). Without it the X11 fallback is slow or fails.
+  - --share=ipc
+  # GPU access for the wgpu renderer (Vulkan, or GL as a fallback).
+  - --device=dri
+  # A disk usage analyzer has to see the whole file system to measure it, and moving what the
+  # owner chose to the trash needs to write there. WhatSpace never changes anything else, and
+  # never deletes: it moves to the trash, from where things can be put back.
+  - --filesystem=host
+  # Deliberately not granted: network (WhatSpace never goes online).
+modules:
+  - name: whatspace
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 bin/whatspace /app/bin/whatspace
+      - install -Dm755 bin/whatspace-cli /app/bin/whatspace-cli
+      - install -Dm644 share/applications/io.github.billsecond.whatspace.desktop /app/share/applications/io.github.billsecond.whatspace.desktop
+      # Already has the release's version and date substituted by package.sh.
+      - install -Dm644 share/metainfo/io.github.billsecond.whatspace.metainfo.xml /app/share/metainfo/io.github.billsecond.whatspace.metainfo.xml
+      - mkdir -p /app/share/icons /app/share/doc && cp -R share/icons/hicolor /app/share/icons/ && cp -R share/doc/whatspace /app/share/doc/
+    sources:
+      - type: dir
+        path: stage
